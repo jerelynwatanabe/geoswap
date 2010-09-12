@@ -1,5 +1,7 @@
 Geoswap::Application.routes.draw do
 
+root :to => 'locations#near_by'
+
 match '/my/recent_check_ins'
 
 resources :users do 
