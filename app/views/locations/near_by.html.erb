@@ -1,0 +1,51 @@
+<h1>Nearby</h1>
+
+<p>You are at:</p>
+<ul>
+<li>Lat: <span id="currentLat">Detecting...</span></li>
+<li>Long: <span id="currentLon">Detecting...</span></li>
+</ul>
+
+<img id="map">
+
+<p>You are near:</p>
+<ol id="near-by-locations">
+
+</ol>
+<p>Don't see your Location? <%= link_to 'Create it!', '#', :id => 'create-location' %></p>
+
+<%= javascript_tag do %>
+document.observe("dom:loaded", function() {
+navigator.geolocation.watchPosition(function(position) {
+$('currentLat').update(position.coords.latitude);
+$('currentLon').update(position.coords.longitude);
+
+new Ajax.Request('/locations/near_by.json', {
+method: 'get',
+requestHeaders: {'Accept': 'application/json'},
+parameters: {'lat': position.coords.latitude, 'lng': position.coords.longitude},
+onSuccess: function(transport) {
+var image_url = "http://maps.google.com/maps/api/staticmap?sensor=true&center=" + position.coords.latitude + "," +
+position.coords.longitude + "&zoom=13&size=1000x1200&markers=color:blue|label:X|" +
+position.coords.latitude + ',' + position.coords.longitude;
+var locations = transport.responseText.evalJSON();
+var html = '';
+
+locations.each(function(item, index) {
+image_url += "&markers=color:green|label:"+(index+1)+"|"+item.location.lat+','+item.location.lng;
+html += '<li>' + item.location.name.escapeHTML();
+html += ' <a href="/locations/' + item.location.id + '/check_ins/new">Check In</a>';
+html += '</li>';
+});
+
+$('near-by-locations').update(html);
+
+$('map').setAttribute('src', image_url);
+
+var create_link_href = "/locations/new?location[lat]=" + position.coords.latitude + "&location[lng]=" + position.coords.longitude;
+$('create-location').setAttribute('href', create_link_href);
+}
+});
+});
+});
+<% end %>
